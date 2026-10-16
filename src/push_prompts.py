@@ -57,7 +57,30 @@ def push_prompt_to_langsmith(prompt_name: str, prompt_data: dict) -> bool:
     Returns:
         True se sucesso, False caso contrário
     """
-    ...
+    username = os.getenv("USERNAME_LANGSMITH_HUB")
+    if not username:
+        print_section_header("Missing USERNAME_LANGSMITH_HUB in .env")
+        return False
+
+    client = Client()
+    prompt = ChatPromptTemplate.from_messages([
+        ("system", prompt_data["system_prompt"]),
+        ("user", prompt_data["user_prompt"]),
+    ])
+
+    try:
+        url = client.push_prompt(
+            f"{username}/{prompt_name}",
+            object=prompt,
+            is_public=True,
+            description=prompt_data["description"],
+            tags=prompt_data["tags"],
+        )
+        print(f"Prompt URL: {url}")
+        return True
+    except Exception as e:
+        print(f"Error pushing prompt: {e}")
+        return False
 
 
 def validate_prompt(prompt_data: dict) -> tuple[bool, list]:
@@ -70,12 +93,47 @@ def validate_prompt(prompt_data: dict) -> tuple[bool, list]:
     Returns:
         (is_valid, errors) - Tupla com status e lista de erros
     """
-    ...
+    errors = []
+    if "description" not in prompt_data:
+        errors.append("Missing 'description'")
+    if "system_prompt" not in prompt_data:
+        errors.append("Missing 'system_prompt'")
+    if "user_prompt" not in prompt_data:
+        errors.append("Missing 'user_prompt'")
+    if "name" not in prompt_data:
+        errors.append("Missing 'name'")
+    if "description" not in prompt_data:
+        errors.append("Missing 'description'")
+    if "version" not in prompt_data:
+        errors.append("Missing 'version'")
+    if "created_at" not in prompt_data:
+        errors.append("Missing 'created_at'")
+    if "tags" not in prompt_data:
+        errors.append("Missing 'tags'")
+    if "techniques" not in prompt_data:
+        errors.append("Missing 'techniques'")
+
+    is_valid = len(errors) == 0
+    return is_valid, errors
 
 
 def main():
     """Função principal"""
-    ...
+    print_section_header("Pushing prompts to LangSmith")
+    prompt_file = "prompts/bug_to_user_story_v2.yml"
+    prompt_data = load_yaml(prompt_file)
+    is_valid, errors = validate_prompt(prompt_data)
+    if not is_valid:
+        print_section_header("Prompt validation failed")
+        for error in errors:
+            print(f"- {error}")
+        return
+
+    success = push_prompt_to_langsmith("bug_to_user_story_v2", prompt_data)
+    if success:
+        print_section_header("Prompt successfully pushed to LangSmith")
+    else:
+        print_section_header("Failed to push prompt to LangSmith")
 
 
 if __name__ == "__main__":

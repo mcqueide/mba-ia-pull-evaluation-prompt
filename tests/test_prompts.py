@@ -17,29 +17,40 @@ def load_prompts(file_path: str):
         return yaml.safe_load(f)
 
 class TestPrompts:
+    PROMPT_PATH = "prompts/bug_to_user_story_v2.yml"
+
     def test_prompt_has_system_prompt(self):
         """Verifica se o campo 'system_prompt' existe e não está vazio."""
-        pass
+        prompt = load_prompts(self.PROMPT_PATH)
+        assert "system_prompt" in prompt and prompt["system_prompt"] != ""
 
     def test_prompt_has_role_definition(self):
         """Verifica se o prompt define uma persona (ex: "Você é um Product Manager")."""
-        pass
+        prompt = load_prompts(self.PROMPT_PATH)
+        assert "system_prompt" in prompt and "Você é" in prompt["system_prompt"]
 
     def test_prompt_mentions_format(self):
         """Verifica se o prompt exige formato Markdown ou User Story padrão."""
-        pass
+        prompt = load_prompts(self.PROMPT_PATH)
+        assert "user_prompt" in prompt and ("Markdown" in prompt["system_prompt"] or
+                "User Story" in prompt["system_prompt"])
 
     def test_prompt_has_few_shot_examples(self):
         """Verifica se o prompt contém exemplos de entrada/saída (técnica Few-shot)."""
-        pass
+        prompt = load_prompts(self.PROMPT_PATH)
+        assert "system_prompt" in prompt and "# Exemplos:" in prompt["system_prompt"]
 
     def test_prompt_no_todos(self):
         """Garante que você não esqueceu nenhum `[TODO]` no texto."""
-        pass
+        prompt = load_prompts(self.PROMPT_PATH)
+        assert "[TODO]" not in prompt["system_prompt"]
+        assert "[TODO]" not in prompt["user_prompt"]
 
     def test_minimum_techniques(self):
         """Verifica (através dos metadados do yaml) se pelo menos 2 técnicas foram listadas."""
-        pass
+        prompt = load_prompts(self.PROMPT_PATH)
+        techniques = prompt.get("techniques", [])
+        assert len(techniques) >= 2, "O prompt deve listar pelo menos 2 técnicas utilizadas."
 
 if __name__ == "__main__":
     pytest.main([__file__, "-v", "--tb=short"])
